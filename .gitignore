@@ -1,0 +1,12 @@
+# Visual Studio
+*.suo
+*.user
+.vs/
+*.vsidx
+
+# Скомпилированные файлы
+bin/
+obj/
+*.exe
+*.pdb
+*.cache
