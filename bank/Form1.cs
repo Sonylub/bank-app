@@ -12,25 +12,43 @@ namespace BankAccountManager
         private Button createAccountButton;
         private Button depositButton;
         private Button withdrawButton;
+        private Label nameLabel;
+        private Label amountLabel;
 
         public BankAccountForm()
         {
             this.Text = "Управление банковским счётом";
             this.Size = new System.Drawing.Size(400, 300);
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
 
-            nameTextBox = new TextBox
+            nameLabel = new Label
             {
                 Location = new System.Drawing.Point(10, 10),
                 Width = 200,
+                Text = "Имя владельца"
+            };
+
+            nameTextBox = new TextBox
+            {
+                Location = new System.Drawing.Point(10, 30),
+                Width = 250,
                 Text = "Введите имя владельца"
             };
             nameTextBox.Enter += (s, e) => { if (nameTextBox.Text == "Введите имя владельца") nameTextBox.Text = ""; };
             nameTextBox.Leave += (s, e) => { if (string.IsNullOrEmpty(nameTextBox.Text)) nameTextBox.Text = "Введите имя владельца"; };
 
+            amountLabel = new Label
+            {
+                Location = new System.Drawing.Point(10, 60),
+                Width = 200,
+                Text = "Сумма"
+            };
+
             amountTextBox = new TextBox
             {
-                Location = new System.Drawing.Point(10, 40),
-                Width = 200,
+                Location = new System.Drawing.Point(10, 80),
+                Width = 250,
                 Text = "Введите сумму"
             };
             amountTextBox.Enter += (s, e) => { if (amountTextBox.Text == "Введите сумму") amountTextBox.Text = ""; };
@@ -38,36 +56,38 @@ namespace BankAccountManager
 
             createAccountButton = new Button
             {
-                Location = new System.Drawing.Point(10, 70),
+                Location = new System.Drawing.Point(10, 110),
                 Text = "Создать счёт",
-                Width = 100
+                Width = 80
             };
             createAccountButton.Click += CreateAccountButton_Click;
 
             depositButton = new Button
             {
-                Location = new System.Drawing.Point(120, 70),
+                Location = new System.Drawing.Point(100, 110),
                 Text = "Пополнить",
-                Width = 100
+                Width = 80
             };
             depositButton.Click += DepositButton_Click;
 
             withdrawButton = new Button
             {
-                Location = new System.Drawing.Point(10, 100),
+                Location = new System.Drawing.Point(190, 110),
                 Text = "Снять",
-                Width = 210
+                Width = 80
             };
             withdrawButton.Click += WithdrawButton_Click;
 
             balanceLabel = new Label
             {
-                Location = new System.Drawing.Point(10, 130),
+                Location = new System.Drawing.Point(10, 140),
                 Width = 200,
                 Text = "Баланс: 0"
             };
 
+            this.Controls.Add(nameLabel);
             this.Controls.Add(nameTextBox);
+            this.Controls.Add(amountLabel);
             this.Controls.Add(amountTextBox);
             this.Controls.Add(createAccountButton);
             this.Controls.Add(depositButton);
