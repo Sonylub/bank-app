@@ -10,3 +10,5 @@ obj/
 *.exe
 *.pdb
 *.cache
+packages/
+TestResults/
