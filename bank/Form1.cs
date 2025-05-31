@@ -1,146 +1,67 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace BankAccountManager
 {
     public partial class BankAccountForm : Form
     {
-        private BankAccount account;
-        private TextBox nameTextBox;
-        private TextBox amountTextBox;
-        private Label balanceLabel;
-        private Button createAccountButton;
-        private Button depositButton;
-        private Button withdrawButton;
-        private Label nameLabel;
-        private Label amountLabel;
+        private Dictionary<string, BankAccount> accounts = new Dictionary<string, BankAccount>();
 
         public BankAccountForm()
         {
-            this.Text = "Управление банковским счётом";
-            this.Size = new System.Drawing.Size(400, 300);
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-
-            nameLabel = new Label
-            {
-                Location = new System.Drawing.Point(10, 10),
-                Width = 200,
-                Text = "Имя владельца"
-            };
-
-            nameTextBox = new TextBox
-            {
-                Location = new System.Drawing.Point(10, 30),
-                Width = 250,
-                Text = "Введите имя владельца"
-            };
-            nameTextBox.Enter += (s, e) => { if (nameTextBox.Text == "Введите имя владельца") nameTextBox.Text = ""; };
-            nameTextBox.Leave += (s, e) => { if (string.IsNullOrEmpty(nameTextBox.Text)) nameTextBox.Text = "Введите имя владельца"; };
-
-            amountLabel = new Label
-            {
-                Location = new System.Drawing.Point(10, 60),
-                Width = 200,
-                Text = "Сумма"
-            };
-
-            amountTextBox = new TextBox
-            {
-                Location = new System.Drawing.Point(10, 80),
-                Width = 250,
-                Text = "Введите сумму"
-            };
-            amountTextBox.Enter += (s, e) => { if (amountTextBox.Text == "Введите сумму") amountTextBox.Text = ""; };
-            amountTextBox.Leave += (s, e) => { if (string.IsNullOrEmpty(amountTextBox.Text)) amountTextBox.Text = "Введите сумму"; };
-
-            createAccountButton = new Button
-            {
-                Location = new System.Drawing.Point(10, 110),
-                Text = "Создать счёт",
-                Width = 80
-            };
-            createAccountButton.Click += CreateAccountButton_Click;
-
-            depositButton = new Button
-            {
-                Location = new System.Drawing.Point(100, 110),
-                Text = "Пополнить",
-                Width = 80
-            };
-            depositButton.Click += DepositButton_Click;
-
-            withdrawButton = new Button
-            {
-                Location = new System.Drawing.Point(190, 110),
-                Text = "Снять",
-                Width = 80
-            };
-            withdrawButton.Click += WithdrawButton_Click;
-
-            balanceLabel = new Label
-            {
-                Location = new System.Drawing.Point(10, 140),
-                Width = 200,
-                Text = "Баланс: 0"
-            };
-
-            this.Controls.Add(nameLabel);
-            this.Controls.Add(nameTextBox);
-            this.Controls.Add(amountLabel);
-            this.Controls.Add(amountTextBox);
-            this.Controls.Add(createAccountButton);
-            this.Controls.Add(depositButton);
-            this.Controls.Add(withdrawButton);
-            this.Controls.Add(balanceLabel);
+            InitializeComponent();
         }
 
         private void CreateAccountButton_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(nameTextBox.Text) || nameTextBox.Text == "Введите имя владельца")
             {
-                MessageBox.Show("Введите имя владельца!");
+                MessageBox.Show("Введите имя!");
                 return;
             }
-            if (string.IsNullOrEmpty(amountTextBox.Text) || amountTextBox.Text == "Введите сумму")
+            if (!decimal.TryParse(amountTextBox.Text, out decimal balance))
             {
-                MessageBox.Show("Введите начальную сумму!");
+                MessageBox.Show("Введите сумму!");
                 return;
             }
-            decimal initialBalance;
-            if (!decimal.TryParse(amountTextBox.Text, out initialBalance))
+
+            string name = nameTextBox.Text;
+            if (accounts.ContainsKey(name))
             {
-                MessageBox.Show("Неверный формат суммы!");
+                MessageBox.Show("Счёт существует!");
                 return;
             }
-            account = new BankAccount(nameTextBox.Text, initialBalance);
-            balanceLabel.Text = $"Баланс: {initialBalance}";
-            MessageBox.Show("Счёт создан!");
+
+            try
+            {
+                accounts[name] = new BankAccount(name, balance);
+                listBox1.Items.Add(name);
+                balancelabel.Text = $"Баланс: {balance}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void DepositButton_Click(object sender, EventArgs e)
         {
-            if (account == null)
+            if (!accounts.TryGetValue(nameTextBox.Text, out BankAccount account))
             {
-                MessageBox.Show("Сначала создайте счёт!");
+                MessageBox.Show("Счёт не найден!");
                 return;
             }
-            if (string.IsNullOrEmpty(amountTextBox.Text) || amountTextBox.Text == "Введите сумму")
+            if (!decimal.TryParse(amountTextBox.Text, out decimal amount))
             {
-                MessageBox.Show("Введите сумму для пополнения!");
+                MessageBox.Show("Введите сумму!");
                 return;
             }
-            decimal amount;
-            if (!decimal.TryParse(amountTextBox.Text, out amount))
-            {
-                MessageBox.Show("Неверный формат суммы!");
-                return;
-            }
+
             try
             {
                 account.Deposit(amount);
-                balanceLabel.Text = $"Баланс: {account.GetBalance()}";
-                MessageBox.Show("Счёт пополнен!");
+                balancelabel.Text = $"Баланс: {account.GetBalance()}";
             }
             catch (Exception ex)
             {
@@ -150,31 +71,59 @@ namespace BankAccountManager
 
         private void WithdrawButton_Click(object sender, EventArgs e)
         {
-            if (account == null)
+            if (!accounts.TryGetValue(nameTextBox.Text, out BankAccount account))
             {
-                MessageBox.Show("Сначала создайте счёт!");
+                MessageBox.Show("Счёт не найден!");
                 return;
             }
-            if (string.IsNullOrEmpty(amountTextBox.Text) || amountTextBox.Text == "Введите сумму")
+            if (!decimal.TryParse(amountTextBox.Text, out decimal amount))
             {
-                MessageBox.Show("Введите сумму для снятия!");
+                MessageBox.Show("Введите сумму!");
                 return;
             }
-            decimal amount;
-            if (!decimal.TryParse(amountTextBox.Text, out amount))
-            {
-                MessageBox.Show("Неверный формат суммы!");
-                return;
-            }
+
             try
             {
                 account.Withdraw(amount);
-                balanceLabel.Text = $"Баланс: {account.GetBalance()}";
-                MessageBox.Show("Средства сняты!");
+                balancelabel.Text = $"Баланс: {account.GetBalance()}";
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void NameTextBox_Enter(object sender, EventArgs e)
+        {
+            if (nameTextBox.Text == "Введите имя владельца")
+                nameTextBox.Text = "";
+        }
+
+        private void NameTextBox_Leave(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(nameTextBox.Text))
+                nameTextBox.Text = "Введите имя владельца";
+        }
+
+        private void AmountTextBox_Enter(object sender, EventArgs e)
+        {
+            if (amountTextBox.Text == "Введите сумму")
+                amountTextBox.Text = "";
+        }
+
+        private void AmountTextBox_Leave(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(amountTextBox.Text))
+                amountTextBox.Text = "Введите сумму";
+        }
+
+        private void ListBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBox1.SelectedItem != null)
+            {
+                string name = listBox1.SelectedItem.ToString();
+                nameTextBox.Text = name;
+                balancelabel.Text = $"Баланс: {accounts[name].GetBalance()}";
             }
         }
     }

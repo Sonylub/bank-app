@@ -8,6 +8,10 @@ public class BankAccount
 
     public BankAccount(string ownerName, decimal initialBalance)
     {
+        if (initialBalance < 0)
+        {
+            throw new ArgumentException("Начальная сумма не может быть отрицательной.");
+        }
         this.ownerName = ownerName;
         this.balance = initialBalance;
     }
