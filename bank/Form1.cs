@@ -7,6 +7,7 @@ namespace BankAccountManager
     public partial class BankAccountForm : Form
     {
         private Dictionary<string, BankAccount> accounts = new Dictionary<string, BankAccount>();
+        private Dictionary<string, List<Operation>> ops = new Dictionary<string, List<Operation>>();
 
         public BankAccountForm()
         {
@@ -15,12 +16,13 @@ namespace BankAccountManager
 
         private void CreateAccountButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(nameTextBox.Text) || nameTextBox.Text == "Введите имя владельца")
+            if (nameTextBox.Text == "" || nameTextBox.Text == "Введите имя владельца")
             {
                 MessageBox.Show("Введите имя!");
                 return;
             }
-            if (!decimal.TryParse(amountTextBox.Text, out decimal balance))
+            decimal balance;
+            if (!decimal.TryParse(amountTextBox.Text, out balance))
             {
                 MessageBox.Show("Введите сумму!");
                 return;
@@ -36,8 +38,10 @@ namespace BankAccountManager
             try
             {
                 accounts[name] = new BankAccount(name, balance);
+                ops[name] = new List<Operation>();
+                ops[name].Add(new Operation("Создание", balance));
                 listBox1.Items.Add(name);
-                balancelabel.Text = $"Баланс: {balance}";
+                balancelabel.Text = "Баланс: " + balance;
                 MessageBox.Show("Счёт создан!");
             }
             catch (Exception ex)
@@ -48,12 +52,13 @@ namespace BankAccountManager
 
         private void DepositButton_Click(object sender, EventArgs e)
         {
-            if (!accounts.TryGetValue(nameTextBox.Text, out BankAccount account))
+            if (!accounts.ContainsKey(nameTextBox.Text))
             {
                 MessageBox.Show("Счёт не найден!");
                 return;
             }
-            if (!decimal.TryParse(amountTextBox.Text, out decimal amount))
+            decimal amount;
+            if (!decimal.TryParse(amountTextBox.Text, out amount))
             {
                 MessageBox.Show("Введите сумму!");
                 return;
@@ -61,8 +66,9 @@ namespace BankAccountManager
 
             try
             {
-                account.Deposit(amount);
-                balancelabel.Text = $"Баланс: {account.GetBalance()}";
+                accounts[nameTextBox.Text].Deposit(amount);
+                ops[nameTextBox.Text].Add(new Operation("Пополнение", amount));
+                balancelabel.Text = "Баланс: " + accounts[nameTextBox.Text].GetBalance();
                 MessageBox.Show("Счёт пополнен!");
             }
             catch (Exception ex)
@@ -73,12 +79,12 @@ namespace BankAccountManager
 
         private void WithdrawButton_Click(object sender, EventArgs e)
         {
-            if (!accounts.TryGetValue(nameTextBox.Text, out BankAccount account))
+            if (!accounts.ContainsKey(nameTextBox.Text))
             {
                 MessageBox.Show("Счёт не найден!");
                 return;
             }
-            if (string.IsNullOrEmpty(amountTextBox.Text) || amountTextBox.Text == "Введите сумму")
+            if (amountTextBox.Text == "" || amountTextBox.Text == "Введите сумму")
             {
                 MessageBox.Show("Введите сумму для снятия!");
                 return;
@@ -91,8 +97,9 @@ namespace BankAccountManager
             }
             try
             {
-                account.Withdraw(amount);
-                balancelabel.Text = $"Баланс: {account.GetBalance()}";
+                accounts[nameTextBox.Text].Withdraw(amount);
+                ops[nameTextBox.Text].Add(new Operation("Снятие", amount));
+                balancelabel.Text = "Баланс: " + accounts[nameTextBox.Text].GetBalance();
                 MessageBox.Show("Средства сняты!");
             }
             catch (Exception ex)
@@ -109,7 +116,7 @@ namespace BankAccountManager
 
         private void NameTextBox_Leave(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(nameTextBox.Text))
+            if (nameTextBox.Text == "")
                 nameTextBox.Text = "Введите имя владельца";
         }
 
@@ -121,17 +128,34 @@ namespace BankAccountManager
 
         private void AmountTextBox_Leave(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(amountTextBox.Text))
+            if (amountTextBox.Text == "")
                 amountTextBox.Text = "Введите сумму";
         }
 
-        private void ListBox1_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListBox1_Click(object sender, EventArgs e)
         {
             if (listBox1.SelectedItem != null)
             {
                 string name = listBox1.SelectedItem.ToString();
                 nameTextBox.Text = name;
-                balancelabel.Text = $"Баланс: {accounts[name].GetBalance()}";
+                balancelabel.Text = "Баланс: " + accounts[name].GetBalance();
+            }
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            if (listBox1.SelectedItem == null)
+            {
+                MessageBox.Show("Выберите счёт!");
+                return;
+            }
+            string name = listBox1.SelectedItem.ToString();
+            Form2 f = new Form2(ops[name]);
+            f.ShowDialog();
+            if (f.DialogResult == DialogResult.OK)
+            {
+                ops[name].Clear();
+                ops[name].Add(new Operation("Очистка истории", accounts[name].GetBalance()));
             }
         }
     }
