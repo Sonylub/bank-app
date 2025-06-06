@@ -38,6 +38,7 @@ namespace BankAccountManager
                 accounts[name] = new BankAccount(name, balance);
                 listBox1.Items.Add(name);
                 balancelabel.Text = $"Баланс: {balance}";
+                MessageBox.Show("Счёт создан!");
             }
             catch (Exception ex)
             {
@@ -62,6 +63,7 @@ namespace BankAccountManager
             {
                 account.Deposit(amount);
                 balancelabel.Text = $"Баланс: {account.GetBalance()}";
+                MessageBox.Show("Счёт пополнен!");
             }
             catch (Exception ex)
             {
@@ -76,16 +78,22 @@ namespace BankAccountManager
                 MessageBox.Show("Счёт не найден!");
                 return;
             }
-            if (!decimal.TryParse(amountTextBox.Text, out decimal amount))
+            if (string.IsNullOrEmpty(amountTextBox.Text) || amountTextBox.Text == "Введите сумму")
             {
-                MessageBox.Show("Введите сумму!");
+                MessageBox.Show("Введите сумму для снятия!");
                 return;
             }
-
+            decimal amount;
+            if (!decimal.TryParse(amountTextBox.Text, out amount))
+            {
+                MessageBox.Show("Неверный формат суммы!");
+                return;
+            }
             try
             {
                 account.Withdraw(amount);
                 balancelabel.Text = $"Баланс: {account.GetBalance()}";
+                MessageBox.Show("Средства сняты!");
             }
             catch (Exception ex)
             {
