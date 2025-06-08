@@ -25,6 +25,7 @@ namespace BankAccountManager
         {
             grid.Rows.Clear();
             DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

@@ -6,8 +6,8 @@ namespace BankAccountManager
 {
     public partial class BankAccountForm : Form
     {
-        private Dictionary<string, BankAccount> accounts = new Dictionary<string, BankAccount>();
-        private Dictionary<string, List<Operation>> ops = new Dictionary<string, List<Operation>>();
+        internal Dictionary<string, BankAccount> accounts = new Dictionary<string, BankAccount>();
+        internal Dictionary<string, OperationHistory> ops = new Dictionary<string, OperationHistory>();
 
         public BankAccountForm()
         {
@@ -38,8 +38,8 @@ namespace BankAccountManager
             try
             {
                 accounts[name] = new BankAccount(name, balance);
-                ops[name] = new List<Operation>();
-                ops[name].Add(new Operation("Создание", balance));
+                ops[name] = new OperationHistory();
+                ops[name].Add("Создание", balance);
                 listBox1.Items.Add(name);
                 balancelabel.Text = "Баланс: " + balance;
                 MessageBox.Show("Счёт создан!");
@@ -67,7 +67,7 @@ namespace BankAccountManager
             try
             {
                 accounts[nameTextBox.Text].Deposit(amount);
-                ops[nameTextBox.Text].Add(new Operation("Пополнение", amount));
+                ops[nameTextBox.Text].Add("Пополнение", amount);
                 balancelabel.Text = "Баланс: " + accounts[nameTextBox.Text].GetBalance();
                 MessageBox.Show("Счёт пополнен!");
             }
@@ -98,7 +98,7 @@ namespace BankAccountManager
             try
             {
                 accounts[nameTextBox.Text].Withdraw(amount);
-                ops[nameTextBox.Text].Add(new Operation("Снятие", amount));
+                ops[nameTextBox.Text].Add("Снятие", amount);
                 balancelabel.Text = "Баланс: " + accounts[nameTextBox.Text].GetBalance();
                 MessageBox.Show("Средства сняты!");
             }
@@ -146,16 +146,15 @@ namespace BankAccountManager
         {
             if (listBox1.SelectedItem == null)
             {
-                MessageBox.Show("Выберите счёт!");
+                MessageBox.Show("Выберите счет!");
                 return;
             }
             string name = listBox1.SelectedItem.ToString();
-            Form2 f = new Form2(ops[name]);
+            Form2 f = new Form2(ops[name].GetAll());
             f.ShowDialog();
             if (f.DialogResult == DialogResult.OK)
             {
-                ops[name].Clear();
-                ops[name].Add(new Operation("Очистка истории", accounts[name].GetBalance()));
+                ops[name].Clear(accounts[name].GetBalance());
             }
         }
     }
