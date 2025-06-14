@@ -1,7 +1,8 @@
 using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Conditions;
 using FlaUI.UIA3;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+using System.Threading;
 
 [TestClass]
 public class BankAccountUITests
@@ -13,37 +14,95 @@ public class BankAccountUITests
     [TestInitialize]
     public void TestInitialize()
     {
-        // Запуск приложения
-        _app = FlaUI.Core.Application.Launch(@"C:\Users\3291922-1\Desktop\bank-app\bank\bin\Debug\bank.exe");
+        Console.WriteLine("Starting application...");
+        _app = FlaUI.Core.Application.Launch(@"C:\Users\Maxim\Desktop\bank-app\bank\bin\Debug\net8.0-windows\bank.exe");
+        Console.WriteLine("Initializing automation...");
         _automation = new UIA3Automation();
+        Console.WriteLine("Getting main window...");
         _mainWindow = _app.GetMainWindow(_automation);
+        Assert.IsNotNull(_mainWindow, "Главное окно не найдено.");
     }
 
     [TestCleanup]
     public void TestCleanup()
     {
+        Console.WriteLine("Cleaning up...");
         _automation?.Dispose();
         _app?.Close();
+    }
+
+    // TC-001: Проверка создания банковского счета с корректными данными
+    [TestMethod]
+    public void TestCreateAccountWithValidData()
+    {
+        var conditionFactory = new ConditionFactory(new UIA3PropertyLibrary());
+
+        // Arrange
+        var nameTextBox = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("nameTextBox"))?.AsTextBox();
+        Assert.IsNotNull(nameTextBox, "Поле 'nameTextBox' не найдено.");
+
+        var amountTextBox = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("amountTextBox"))?.AsTextBox();
+        Assert.IsNotNull(amountTextBox, "Поле 'amountTextBox' не найдено.");
+
+        var createButton = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("createAccountButton"))?.AsButton();
+        Assert.IsNotNull(createButton, "Кнопка 'createAccountButton' не найдена.");
+
+        var balanceLabel = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("balancelabel"))?.AsLabel();
+        Assert.IsNotNull(balanceLabel, "Метка 'balancelabel' не найдена.");
+
+        // Act
+        nameTextBox.Text = "user";
+        amountTextBox.Text = "100";
+        createButton.Invoke();
+        Thread.Sleep(500); // Задержка для рендеринга MessageBox
+
+        // Assert
+        var messageBox = _mainWindow.FindFirstDescendant(conditionFactory.ByControlType(FlaUI.Core.Definitions.ControlType.Window));
+        Assert.IsNotNull(messageBox, "Модальное окно (MessageBox) не найдено.");
+
+        var msgText = messageBox.FindFirstDescendant(conditionFactory.ByAutomationId("65535"))?.AsLabel();
+        Assert.IsNotNull(msgText, "Текст сообщения в MessageBox не найден.");
+        StringAssert.Contains(msgText.Text, "Счёт создан");
+
+        var okButton = messageBox.FindFirstDescendant(conditionFactory.ByAutomationId("2"))?.AsButton();
+        Assert.IsNotNull(okButton, "Кнопка 'OK' в MessageBox не найдена.");
+        okButton.Invoke();
+
+        StringAssert.Contains(balanceLabel.Text, "Баланс: 100");
     }
 
     // TC-002: Проверка создания счёта с отрицательной суммой
     [TestMethod]
     public void TestCreateAccountWithNegativeAmount()
     {
+        var conditionFactory = new ConditionFactory(new UIA3PropertyLibrary());
+
         // Arrange
-        var nameTextBox = _mainWindow.FindFirstDescendant(cf => cf.ByAutomationId("nameTextBox")).AsTextBox(); // Строка 39
-        var amountTextBox = _mainWindow.FindFirstDescendant(cf => cf.ByAutomationId("amountTextBox")).AsTextBox(); // Строка 40
-        var createButton = _mainWindow.FindFirstDescendant(cf => cf.ByAutomationId("createButton")).AsButton(); // Строка 41
+        var nameTextBox = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("nameTextBox"))?.AsTextBox();
+        Assert.IsNotNull(nameTextBox, "Поле 'nameTextBox' не найдено.");
+
+        var amountTextBox = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("amountTextBox"))?.AsTextBox();
+        Assert.IsNotNull(amountTextBox, "Поле 'amountTextBox' не найдено.");
+
+        var createButton = _mainWindow.FindFirstDescendant(conditionFactory.ByAutomationId("createAccountButton"))?.AsButton();
+        Assert.IsNotNull(createButton, "Кнопка 'createAccountButton' не найдена.");
 
         // Act
-        nameTextBox.Enter("test");
-        amountTextBox.Enter("-50");
-        createButton.Click();
+        nameTextBox.Text = "test";
+        amountTextBox.Text = "-50";
+        createButton.Invoke();
+        Thread.Sleep(500); // Задержка для рендеринга MessageBox
 
         // Assert
-        var messageBox = _mainWindow.ModalWindows.FirstOrDefault(); // Строка 45
-        var msgText = messageBox.FindFirstDescendant(cf => cf.ByAutomationId("65535")).AsLabel(); // Строка 46
-        StringAssert.Contains(msgText.Text, "Начальная сумма не может быть отрицательной.");
-        var okButton = messageBox.FindFirstDescendant(cf => cf.ByAutomationId("2")).AsButton(); // Строка 48
-        okButton.Click();
+        var messageBox = _mainWindow.FindFirstDescendant(conditionFactory.ByControlType(FlaUI.Core.Definitions.ControlType.Window));
+        Assert.IsNotNull(messageBox, "Модальное окно (MessageBox) не найдено.");
+
+        var msgText = messageBox.FindFirstDescendant(conditionFactory.ByAutomationId("65535"))?.AsLabel();
+        Assert.IsNotNull(msgText, "Текст сообщения в MessageBox не найден.");
+        StringAssert.Contains(msgText.Text, "Введите сумму");
+
+        var okButton = messageBox.FindFirstDescendant(conditionFactory.ByAutomationId("2"))?.AsButton();
+        Assert.IsNotNull(okButton, "Кнопка 'OK' в MessageBox не найдена.");
+        okButton.Invoke();
     }
+}
